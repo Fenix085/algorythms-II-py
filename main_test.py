@@ -1,6 +1,6 @@
 import pytest
 
-from main import bruteForce, kmp, rabinKarp
+from main import bruteForce, kmp, rabinKarp, gusfieldZ
 
 def test_bruteForce():
     assert bruteForce("b", "aabaa") == [2]
@@ -23,6 +23,9 @@ def test_rabinKarp():
     assert rabinKarp("aa", "aaaaa") == [0, 1, 2, 3]
     assert rabinKarp("a b", "a aa a b aa b") == [5, 10]
 
-
-
-
+def test_gusfieldZ():
+    assert gusfieldZ("b", "aabaa") == [2]
+    assert gusfieldZ("abc", "abccbaabccba") == [0, 6]
+    assert gusfieldZ("b", "aaaaa") == []
+    assert gusfieldZ("aa", "aaaaa") == [0, 1, 2, 3]
+    assert gusfieldZ("a b", "a aa a b aa b") == [5, 10]
