@@ -1,4 +1,7 @@
-
+import time
+from statistics import median
+import matplotlib.pyplot as plt
+import numpy as np
 
 # brute force approach
 def bruteForce(pattern: str, text: str):
@@ -147,15 +150,76 @@ def gusfieldZ(pattern: str, text: str):
             pos.append(i - m - 1)
 
     return pos
-    
+
+def measure(algo, pattern, text, reps=30):
+    lengths = []
+    times = []
+    for n in range(10, 101, 10):
+        _text = text[:len(text)*n//100]
+        lengths.append(len(_text))
+
+        rep_times = []
+        for _ in range(reps):
+            start = time.perf_counter()
+            algo(pattern, _text)
+            end = time.perf_counter()
+            rep_times.append(end - start)
+        times.append(np.median(rep_times))
+    return lengths, times
+
+def grouped_boxplot(short_results, long_results, title, ylabel, path):
+    labels = list(short_results.keys())
+    n = len(labels)
+    short_data = [short_results[k] for k in labels]
+    long_data  = [long_results[k]  for k in labels]
+
+    positions_short = [2*i + 1 for i in range(n)]
+    positions_long  = [2*i + 1.6 for i in range(n)]
+
+    plt.figure(figsize=(13, 6))
+    b1 = plt.boxplot(short_data, positions=positions_short, widths=0.5,
+                     patch_artist=True, showmeans=True)
+    b2 = plt.boxplot(long_data, positions=positions_long, widths=0.5,
+                     patch_artist=True, showmeans=True)
+
+    for box in b1['boxes']: box.set_facecolor("#9ecae1")
+    for box in b2['boxes']: box.set_facecolor("#fc9272")
+
+    plt.xticks([2*i + 1.3 for i in range(n)], labels, rotation=25, ha="right")
+    plt.ylabel(ylabel)
+    plt.title(title)
+    plt.legend([b1["boxes"][0], b2["boxes"][0]], ["Short pattern", "Long pattern"])
+    plt.yscale("log")  # brute force will dominate otherwise
+    plt.tight_layout()
+    plt.savefig(path, dpi=200)
+    plt.close()
 
 if __name__ == "__main__":
     f = open("stuff/Lord of The Rings (JRR Tolkien).txt")
     text = f.read()
     f.close()
-    patterns = ["There is nothing, Lady Galadriel", "	Gandalf looked at Frodo, and his eyes glinted. I knew much and I have learned much,' he answered. 'But I am not going to give an account of all my doings to you. The history of Elendil and Isildur and the One Ring is known to all the Wise. Your ring is shown to be that One Ring by the fire-writing alone, apart from any other evidence.' 'And when did you discover that?' asked Frodo, interrupting. 'Just now in this room, of course,' answered the wizard sharply. 'But I expected to find it. I have come back from dark journeys and long search to make that final test. It is the last proof, and all is now only too clear. Making out Gollum's part, and fitting it into the gap in the history, required some thought. I may have started with guesses about Gollum, but I am not guessing now. I know. I have seen him.'"]
-    for pattern in patterns:
-        print("Brute Force:", bruteForce(pattern, text))
-        print("KMP:", kmp(pattern, text))
-        print("Rabin-Karp:", rabinKarp(pattern, text))
-        print("Gusfield Z:", gusfieldZ(pattern, text))
+
+    pattern = "Frodo"
+    
+    algos = {
+        "Brute Force": bruteForce,
+        "KMP": kmp,
+        "Rabin-Karp": rabinKarp,
+        "Gusfield Z": gusfieldZ
+    }
+
+    results_short = {name: [] for name in algos}
+    results_long = {name: [] for name in algos}
+
+    for name, algo in algos.items():
+        lengths, avg_times = measure(algo, pattern, text, reps = 5)
+        plt.plot(lengths, avg_times, label=name, marker="o")
+
+    plt.xlabel("Text length (characters)")
+    plt.ylabel("Average runtime (seconds)")
+    plt.title("Pattern matching algorithm comparison")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig("results/comparison.png", dpi=150)
+    plt.show()
