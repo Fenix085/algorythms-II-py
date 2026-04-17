@@ -238,6 +238,6 @@ if __name__ == "__main__":
     text = f.read()
     f.close()
 
-    pattern = "Frodo"
+    patterns = ["Frodo", ]
 
-    compare(pattern, text)
+    compare(patterns, text)
