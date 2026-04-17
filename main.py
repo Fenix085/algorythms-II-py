@@ -209,22 +209,16 @@ def grouped_boxplot(short_results, long_results, title, ylabel, path):
     plt.savefig(path, dpi=200)
     plt.close()
 
-if __name__ == "__main__":
-    f = open("stuff/Lord of The Rings (JRR Tolkien).txt")
-    text = f.read()
-    f.close()
-
-    pattern = "Frodo"
-    
+def compare(pattern, text):
     algos = {
         "Brute Force": bruteForce,
+        "Sunday": sunday,
         "KMP": kmp,
         "Rabin-Karp": rabinKarp,
         "Gusfield Z": gusfieldZ
     }
 
-    results_short = {name: [] for name in algos}
-    results_long = {name: [] for name in algos}
+    results = {name: [] for name in algos}
 
     for name, algo in algos.items():
         lengths, avg_times = measure(algo, pattern, text, reps = 5)
@@ -238,3 +232,12 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig("results/comparison.png", dpi=150)
     plt.show()
+
+if __name__ == "__main__":
+    f = open("stuff/Lord of The Rings (JRR Tolkien).txt")
+    text = f.read()
+    f.close()
+
+    pattern = "Frodo"
+
+    compare(pattern, text)
