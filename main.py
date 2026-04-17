@@ -20,7 +20,22 @@ def bruteForce(pattern: str, text: str):
 
 # Sunday
 def sunday(pattern: str, text: str):
-    pass
+    m, n = len(pattern), len(text)
+
+    occ = {}
+    for j in range(m):
+        occ[pattern[j]] = j
+
+    matches = []
+    i = 0
+    while i <= n - m:
+        if text.startswith(pattern, i):
+            matches.append(i)
+        i+=m
+        if i < n:
+            i -= occ.get(text[i], -1)
+
+    return matches
 
 # KMP
 def kmp(pattern: str, text: str):
