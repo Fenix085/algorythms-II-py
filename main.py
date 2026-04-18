@@ -235,7 +235,7 @@ def grouped_boxplot(short_results, long_results, title, ylabel, path):
     plt.savefig(path, dpi=200)
     plt.close()
 
-def compare(pattern, text):
+def compare(pattern, text, isLong = False):
     algos = {
         "Brute Force": bruteForce,
         "Sunday": sunday,
@@ -257,7 +257,10 @@ def compare(pattern, text):
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig("results/comparison.png", dpi=150)
+    if isLong:
+        plt.savefig("results/comparison_long.png", dpi=150)
+    else:
+        plt.savefig("results/comparison.png", dpi=150)
     plt.show()
 
 if __name__ == "__main__":
@@ -265,6 +268,10 @@ if __name__ == "__main__":
     text = f.read()
     f.close()
 
-    pattern = "Frodo"
+    pattern_short = "Frodo"
+    pattern_long = """Sam looked at his master with approval, but also with surprise: there was a look in his face and a tone in his voice that he had not known before. It had always been a notion of his that the kindness of dear Mr. Frodo was of such a high degree that it must imply a fair measure of blindness. Of course, he also firmly held the incompatible belief that Mr. Frodo was the wisest person in the world (with the possible exception of Old Mr. Bilbo and of Gandalf). Gollum in his own way, and with much more excuse as his acquaintance was much briefer, may have _made a similar mistake, confusing kindness and blindness. At any rate this speech abashed and terrified him. He grovelled on the ground and could speak no clear words but nice master.
+	Frodo waited patiently for a while, then he spoke again less sternly. `Come now, Gollum or Sm�agol if you wish, tell me of this other way, and show me, if you can, what hope there is in it, enough to justify me in turning aside from my plain path. I am in haste.'
+	But Gollum was in a pitiable state, and Frodo's threat had quite unnerved him. It was not easy to get any clear account out of him, amid his mumblings and squeakings, and the frequent interruptions in which he crawled on the floor and begged them both to be kind to `poor little Sm�agol'. After a while he grew a little calmer, and Frodo gathered bit by bit that, if a traveller followed the road that turned west of Ephel D�ath, he would come in time to a crossing in a circle of dark trees. On the right a road went down to Osgiliath and the bridges of the Anduin; in the middle the road went on southwards."""
 
-    compare(pattern, text)
+    compare(pattern_short, text)
+    compare(pattern_long, text, isLong=True)
