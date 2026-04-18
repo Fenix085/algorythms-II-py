@@ -239,7 +239,7 @@ def grouped_boxplot(short_results, long_results, title, ylabel, path):
     plt.ylabel(ylabel)
     plt.title(title)
     plt.legend([b1["boxes"][0], b2["boxes"][0]], ["Short pattern", "Long pattern"])
-    plt.yscale("linear")  # brute force will dominate otherwise
+    plt.yscale("linear")
     plt.tight_layout()
     plt.savefig(path, dpi=200)
     plt.close()
