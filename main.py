@@ -192,20 +192,29 @@ def gusfieldZ(pattern: str, text: str):
 
     return pos
 
-def measure(algo, pattern, text, reps=30):
-    lengths = []
+def measure_samples(algo, pattern, text, reps=30):
+
     times = []
+    for _ in range(reps):
+        t0 = time.perf_counter()
+        algo(pattern, text)
+        times.append(time.perf_counter() - t0)
+    return times
+
+def measure_scaling(algo, pattern, text, reps=30):
+
+    lengths, times = [], []
     for n in range(10, 101, 10):
-        _text = text[:len(text)*n//100]
+        _text = text[: len(text) * n // 100]
         lengths.append(len(_text))
 
-        rep_times = []
+        rep_times: list[float] = []
         for _ in range(reps):
-            start = time.perf_counter()
+            t0 = time.perf_counter()
             algo(pattern, _text)
-            end = time.perf_counter()
-            rep_times.append(end - start)
-        times.append(np.median(rep_times))
+            rep_times.append(time.perf_counter() - t0)
+
+        times.append(float(np.median(rep_times)))
     return lengths, times
 
 def grouped_boxplot(short_results, long_results, title, ylabel, path):
@@ -230,26 +239,22 @@ def grouped_boxplot(short_results, long_results, title, ylabel, path):
     plt.ylabel(ylabel)
     plt.title(title)
     plt.legend([b1["boxes"][0], b2["boxes"][0]], ["Short pattern", "Long pattern"])
-    plt.yscale("log")  # brute force will dominate otherwise
+    plt.yscale("linear")  # brute force will dominate otherwise
     plt.tight_layout()
     plt.savefig(path, dpi=200)
     plt.close()
 
 def compare(pattern, text, isLong = False):
-    algos = {
-        "Brute Force": bruteForce,
-        "Sunday": sunday,
-        "KMP": kmp,
-        "FSM": fsm,
-        "Rabin-Karp": rabinKarp,
-        "Gusfield Z": gusfieldZ
-    }
-
-    results = {name: [] for name in algos}
-
-    for name, algo in algos.items():
-        lengths, avg_times = measure(algo, pattern, text, reps = 5)
+    for name, algo in ALGOS.items():
+        lengths, avg_times = measure_scaling(algo, pattern, text, reps = 5)
         plt.plot(lengths, avg_times, label=name, marker="o")
+
+    expected_short = bruteForce(pattern_short, text)
+    expected_long  = bruteForce(pattern_long,  text)
+    for name, algo in ALGOS.items():
+        assert algo(pattern_short, text) == expected_short, f"{name} wrong on short"
+        assert algo(pattern_long,  text) == expected_long,  f"{name} wrong on long"
+    print("All algorithms agree ✓")
 
     plt.xlabel("Text length (characters)")
     plt.ylabel("Average runtime (seconds)")
@@ -263,6 +268,15 @@ def compare(pattern, text, isLong = False):
         plt.savefig("results/comparison.png", dpi=150)
     plt.show()
 
+ALGOS = {
+    "Brute Force": bruteForce,
+    "Sunday": sunday,
+    "KMP": kmp,
+    "FSM": fsm,
+    "Rabin-Karp": rabinKarp,
+    "Gusfield Z": gusfieldZ
+}
+
 if __name__ == "__main__":
     f = open("stuff/Lord of The Rings (JRR Tolkien).txt")
     text = f.read()
@@ -273,5 +287,10 @@ if __name__ == "__main__":
 	Frodo waited patiently for a while, then he spoke again less sternly. `Come now, Gollum or Sm�agol if you wish, tell me of this other way, and show me, if you can, what hope there is in it, enough to justify me in turning aside from my plain path. I am in haste.'
 	But Gollum was in a pitiable state, and Frodo's threat had quite unnerved him. It was not easy to get any clear account out of him, amid his mumblings and squeakings, and the frequent interruptions in which he crawled on the floor and begged them both to be kind to `poor little Sm�agol'. After a while he grew a little calmer, and Frodo gathered bit by bit that, if a traveller followed the road that turned west of Ephel D�ath, he would come in time to a crossing in a circle of dark trees. On the right a road went down to Osgiliath and the bridges of the Anduin; in the middle the road went on southwards."""
 
-    compare(pattern_short, text)
-    compare(pattern_long, text, isLong=True)
+    short_results = {name: measure_samples(algo, pattern_short, text) for name, algo in ALGOS.items()}
+    long_results  = {name: measure_samples(algo, pattern_long,  text) for name, algo in ALGOS.items()}
+    
+    grouped_boxplot(short_results, long_results, "Pattern matching algorithm comparison", "Runtime (seconds)", "results/boxplots.png")
+
+    # compare(pattern_short, text)
+    # compare(pattern_long, text, isLong=True)
