@@ -85,6 +85,32 @@ def computeLPSArray(pattern: str, M: int, lps: list):
                 i += 1
 
 # fsm
+def fsm(pattern: str, text: str):
+    TF = build_transition_table(pattern)
+    m, n = len(pattern), len(text)
+    state = 0
+    results = []
+    for i in range(n):
+        state = TF[state].get(text[i], 0)
+        if state == m:
+            results.append(i - m + 1)
+    return results
+
+def build_transition_table(pattern: str):
+    TF = [{} for _ in range(len(pattern)+1)]
+    X = 0
+    alphabet = set(pattern)
+
+    for state in range(len(pattern)+1):
+        if state > 1:
+            X = TF[X].get(pattern[state-1], 0)
+        for char in alphabet:
+            if state < len(pattern) and char == pattern[state]:
+                TF[state][char] = state + 1
+            else:
+                TF[state][char] = TF[X].get(char, 0)
+    return TF
+
 
 # rabin-karp
 def rabinKarp(pattern: str, text: str):
@@ -214,6 +240,7 @@ def compare(pattern, text):
         "Brute Force": bruteForce,
         "Sunday": sunday,
         "KMP": kmp,
+        "FSM": fsm,
         "Rabin-Karp": rabinKarp,
         "Gusfield Z": gusfieldZ
     }
@@ -238,6 +265,6 @@ if __name__ == "__main__":
     text = f.read()
     f.close()
 
-    patterns = ["Frodo", ]
+    pattern = "Frodo"
 
-    compare(patterns, text)
+    compare(pattern, text)

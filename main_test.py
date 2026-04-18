@@ -1,6 +1,6 @@
 import pytest
 
-from main import bruteForce, kmp, rabinKarp, gusfieldZ, sunday
+from main import bruteForce, kmp, rabinKarp, gusfieldZ, sunday, fsm
 
 def test_bruteForce():
     assert bruteForce("b", "aabaa") == [2]
@@ -36,3 +36,10 @@ def test_sunday():
     assert sunday("b", "aaaaa") == []
     assert sunday("aa", "aaaaa") == [0, 1, 2, 3]
     assert sunday("a b", "a aa a b aa b") == [5, 10]
+
+def test_fsm():
+    assert fsm("b", "aabaa") == [2]
+    assert fsm("abc", "abccbaabccba") == [0, 6]
+    assert fsm("b", "aaaaa") == []
+    assert fsm("aa", "aaaaa") == [0, 1, 2, 3]
+    assert fsm("a b", "a aa a b aa b") == [5, 10]
