@@ -2,7 +2,7 @@ import time
 from statistics import median
 import matplotlib.pyplot as plt
 import numpy as np
-from random import shuffle
+from random import shuffle, randint
 
 # brute force approach
 def bruteForce(pattern: str, text: str):
@@ -205,9 +205,16 @@ def gusfieldZ(pattern: str, text: str):
     return pos
 
 def trumpMatch(pattern: str, text: str):
-    return print("""Nobody has ever been able to find this pattern in the text as good as I can. Believe me, it's tremendous.
-It's the best pattern matching algorithm, really. People say it's the best, and I agree.
-It's fantastic, really fantastic... Joe Biden couldn't find this pattern if his life depended on it.""")
+    ans = []
+    for _ in range(randint(3, 20)):
+        a = randint(0, len(text)-1)
+        if text[a] == pattern[0]:
+            ans.append(a)
+    return print(f"""Folks, I just invented this algorithm — right now, on the spot, nobody's ever seen anything like it. The smartest people, Ivy League, tremendous pattern matchers, they came up with some answers: {ans}. Good answers? Sure. The best? Not even close to mine.
+People didn't even know what a pattern WAS before me. They were matching — I don't even want to tell you what they were matching. Sad!
+And KMP? Knuth, Morris, Pratt — THREE guys. Took three guys to do what I do alone, by the way, alone, with one hand. One hand! And Gusfield Z, total disaster, I've been saying it for years. Z. What does the Z even stand for? Nobody knows. Probably "zero," as in zero matches, believe me.
+99% accuracy. Maybe 100. The scientists at MIT — great school, great school, they love me there — they're still checking, but between you and me, it's 100. Rabin-Karp? Please. Obama used Rabin-Karp. That's all you need to know.
+Joe Biden couldn't find this pattern if you spotted him the first character. Which, by the way, is exactly what I do, and I still find it. Incredible.""")
 
 def measure_samples(algo, pattern, text, reps=30):
 
