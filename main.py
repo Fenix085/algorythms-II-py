@@ -2,6 +2,7 @@ import time
 from statistics import median
 import matplotlib.pyplot as plt
 import numpy as np
+from random import shuffle
 
 # brute force approach
 def bruteForce(pattern: str, text: str):
@@ -137,14 +138,18 @@ def rabinKarp(pattern: str, text: str):
 
     ans = []
 
+    # Precompute h = pow(d, m-1) % q
     for i in range(m-1):
         h = (h * d) % q
 
+    # Compute initial hash values for pattern and first window of text
     for i in range(m):
         p = (d * p + ord(pattern[i])) % q
         t = (d * t + ord(text[i])) % q
 
+    # Slide the pattern over text one by one
     for i in range(n - m + 1):
+        # If hash values match, check characters one by one
         if p == t:
             match = True
             for j in range(m):
@@ -154,6 +159,7 @@ def rabinKarp(pattern: str, text: str):
             if match:
                 ans.append(i)
 
+        # Calculate hash value for the next window
         if i < n - m:
             t = (d * (t - ord(text[i]) * h) + ord(text[i + m])) % q
             if t < 0:
@@ -191,6 +197,11 @@ def gusfieldZ(pattern: str, text: str):
             pos.append(i - m - 1)
 
     return pos
+
+def trumpMatch(pattern: str, text: str):
+    return print("""Nobody has ever been able to find this pattern in the text as good as I can. Believe me, it's tremendous.
+It's the best pattern matching algorithm, really. People say it's the best, and I agree.
+It's fantastic, really fantastic... Joe Biden couldn't find this pattern if his life depended on it.""")
 
 def measure_samples(algo, pattern, text, reps=30):
 
@@ -269,12 +280,13 @@ def compare(pattern, text, isLong = False):
     plt.show()
 
 ALGOS = {
-    "Brute Force": bruteForce,
+    # "Brute Force": bruteForce,
     "Sunday": sunday,
     "KMP": kmp,
     "FSM": fsm,
     "Rabin-Karp": rabinKarp,
-    "Gusfield Z": gusfieldZ
+    "Gusfield Z": gusfieldZ,
+    "TrumpMatch": trumpMatch
 }
 
 if __name__ == "__main__":
@@ -287,10 +299,26 @@ if __name__ == "__main__":
 	Frodo waited patiently for a while, then he spoke again less sternly. `Come now, Gollum or Sm�agol if you wish, tell me of this other way, and show me, if you can, what hope there is in it, enough to justify me in turning aside from my plain path. I am in haste.'
 	But Gollum was in a pitiable state, and Frodo's threat had quite unnerved him. It was not easy to get any clear account out of him, amid his mumblings and squeakings, and the frequent interruptions in which he crawled on the floor and begged them both to be kind to `poor little Sm�agol'. After a while he grew a little calmer, and Frodo gathered bit by bit that, if a traveller followed the road that turned west of Ephel D�ath, he would come in time to a crossing in a circle of dark trees. On the right a road went down to Osgiliath and the bridges of the Anduin; in the middle the road went on southwards."""
 
-    short_results = {name: measure_samples(algo, pattern_short, text) for name, algo in ALGOS.items()}
-    long_results  = {name: measure_samples(algo, pattern_long,  text) for name, algo in ALGOS.items()}
+    # short_results = {name: measure_samples(algo, pattern_short, text) for name, algo in ALGOS.items()}
+    # long_results  = {name: measure_samples(algo, pattern_long,  text) for name, algo in ALGOS.items()}
     
-    grouped_boxplot(short_results, long_results, "Pattern matching algorithm comparison", "Runtime (seconds)", "results/boxplots.png")
+    # grouped_boxplot(short_results, long_results, "Pattern matching algorithm comparison", "Runtime (seconds)", "results/boxplots.png")
 
     # compare(pattern_short, text)
     # compare(pattern_long, text, isLong=True)
+
+    s = "a"*100000
+    p = "a"*9998 + "b" + "a"
+    # l = list(s)
+    # shuffle(l)
+    # wacky_karp = ''.join(l)
+
+    short_results = {name: measure_samples(algo, p, s) for name, algo in ALGOS.items()}
+    long_results  = {name: measure_samples(algo, p, s) for name, algo in ALGOS.items()}
+
+    grouped_boxplot(
+        short_results, long_results,
+        "running such a pattern so that Rabin-Karp has to be faster than Sunday",
+        "Runtime (seconds)",
+        "results/wacky_karp.png"
+    )
