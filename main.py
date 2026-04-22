@@ -19,8 +19,55 @@ def bruteForce(pattern: str, text: str):
             results.append(i)
     return results
 
-def bruteMode(pattern: str, text: str):
-    pass
+LITERAL, ANY_ONE, ANY_MANY = 0, 1, 2
+
+def tokenize(pattern: str):
+    tokens = []
+    i = 0
+    while i < len(pattern):
+        c = pattern[i]
+        if c == "\\":
+            if i + 1 >= len(pattern):
+                raise ValueError("pattern ends with a dangling backslash")
+            tokens.append((LITERAL, pattern[i+1]))
+            i += 2
+        elif c == "?":
+            tokens.append((ANY_ONE, None))
+            i += 1
+        elif c == "*":
+            if tokens and tokens[-1][0] == ANY_MANY:
+                i += 1
+                continue
+            tokens.append((ANY_MANY, None))
+            i += 1
+        else:
+            tokens.append((LITERAL, c))
+            i += 1
+    return tokens
+
+def bruteMode(pattern: str, text: str) -> bool:
+    tokens = tokenize(pattern)
+    n = len(text)
+    m = len(tokens)
+    dp = [[False] * (m + 1) for _ in range(n + 1)]
+
+    dp[0][0] = True
+    for j in range(1, m + 1):
+        if tokens[j - 1][0] == ANY_MANY:
+            dp[0][j] = dp[0][j - 1]
+
+    for i in range(1, n + 1):
+        dp[i][0] = True
+        for j in range(1, m + 1):
+            kind, ch = tokens[j - 1]
+            if kind == ANY_MANY:
+                dp[i][j] = dp[i - 1][j] or dp[i][j - 1]
+            elif kind == ANY_ONE:
+                dp[i][j] = dp[i - 1][j - 1]
+            else:
+                dp[i][j] = dp[i - 1][j - 1] and text[i - 1] == ch
+
+    return any(dp[i][m] for i in range(n + 1))
 
 # Sunday
 def sunday(pattern: str, text: str):
@@ -304,22 +351,22 @@ ALGOS = {
 }
 
 if __name__ == "__main__":
-    f = open("stuff/Lord of The Rings (JRR Tolkien).txt")
-    text = f.read()
-    f.close()
+    # f = open("stuff/Lord of The Rings (JRR Tolkien).txt")
+    # text = f.read()
+    # f.close()
 
     pattern_short = "Frodo"
     pattern_long = """Sam looked at his master with approval, but also with surprise: there was a look in his face and a tone in his voice that he had not known before. It had always been a notion of his that the kindness of dear Mr. Frodo was of such a high degree that it must imply a fair measure of blindness. Of course, he also firmly held the incompatible belief that Mr. Frodo was the wisest person in the world (with the possible exception of Old Mr. Bilbo and of Gandalf). Gollum in his own way, and with much more excuse as his acquaintance was much briefer, may have _made a similar mistake, confusing kindness and blindness. At any rate this speech abashed and terrified him. He grovelled on the ground and could speak no clear words but nice master.
-	Frodo waited patiently for a while, then he spoke again less sternly. `Come now, Gollum or Sm�agol if you wish, tell me of this other way, and show me, if you can, what hope there is in it, enough to justify me in turning aside from my plain path. I am in haste.'
-	But Gollum was in a pitiable state, and Frodo's threat had quite unnerved him. It was not easy to get any clear account out of him, amid his mumblings and squeakings, and the frequent interruptions in which he crawled on the floor and begged them both to be kind to `poor little Sm�agol'. After a while he grew a little calmer, and Frodo gathered bit by bit that, if a traveller followed the road that turned west of Ephel D�ath, he would come in time to a crossing in a circle of dark trees. On the right a road went down to Osgiliath and the bridges of the Anduin; in the middle the road went on southwards."""
+	# Frodo waited patiently for a while, then he spoke again less sternly. `Come now, Gollum or Sm�agol if you wish, tell me of this other way, and show me, if you can, what hope there is in it, enough to justify me in turning aside from my plain path. I am in haste.'
+	# But Gollum was in a pitiable state, and Frodo's threat had quite unnerved him. It was not easy to get any clear account out of him, amid his mumblings and squeakings, and the frequent interruptions in which he crawled on the floor and begged them both to be kind to `poor little Sm�agol'. After a while he grew a little calmer, and Frodo gathered bit by bit that, if a traveller followed the road that turned west of Ephel D�ath, he would come in time to a crossing in a circle of dark trees. On the right a road went down to Osgiliath and the bridges of the Anduin; in the middle the road went on southwards."""
 
     # short_results = {name: measure_samples(algo, pattern_short, text) for name, algo in ALGOS.items()}
     # long_results  = {name: measure_samples(algo, pattern_long,  text) for name, algo in ALGOS.items()}
     
     # grouped_boxplot(short_results, long_results, "Pattern matching algorithm comparison", "Runtime (seconds)", "results/boxplots.png")
 
-    compare(pattern_short, text)
-    compare(pattern_long, text, isLong=True)
+    # compare(pattern_short, text)
+    # compare(pattern_long, text, isLong=True)
 
     # s = "a"*100000
     # p = "a"*9998 + "b" + "a"
@@ -336,3 +383,5 @@ if __name__ == "__main__":
     #     "Runtime (seconds)",
     #     "results/wacky_karp.png"
     # )
+
+    print(bruteMode("*ba", "aaabaaaba"))
