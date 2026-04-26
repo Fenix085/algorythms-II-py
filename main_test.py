@@ -1,6 +1,6 @@
 import pytest
 
-from main import bruteForce, kmp, rabinKarp, gusfieldZ, sunday, fsm, bruteMode
+from main import bruteForce, kmp, rabinKarp, gusfieldZ, sunday, fsm, bruteMode, sundayMode
 
 def test_bruteForce():
     assert bruteForce("b", "aabaa") == [2]
@@ -45,6 +45,17 @@ def test_fsm():
     assert fsm("a b", "a aa a b aa b") == [5, 10]
 
 def test_bruteMode():
+    assert bruteMode("aba", "aaabaaaba") == True
+    assert bruteMode("*ba", "aaabaaaba") == True
+    assert bruteMode("a?a", "aaabaaaba") == True
+    assert bruteMode("a?b", "aaabaaaba") == True
+    assert bruteMode("a?*", "aaabaaaba") == True
+    assert bruteMode("b*b", "aaabaaaba") == True
+    assert bruteMode("ac", "aaabaaaba") == False
+    assert bruteMode("a?c", "aaabaaaba") == False
+    assert bruteMode("a?*c", "aaabaaaba") == False
+
+def test_sundayMode():
     assert bruteMode("aba", "aaabaaaba") == True
     assert bruteMode("*ba", "aaabaaaba") == True
     assert bruteMode("a?a", "aaabaaaba") == True

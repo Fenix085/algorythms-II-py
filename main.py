@@ -88,8 +88,86 @@ def sunday(pattern: str, text: str):
 
     return matches
 
-def sundayMode(pattern: str, text: str):
-    pass
+def split_on_star(tokens: list):
+    chunks = []
+    current = []
+
+    starts_with_star = bool(tokens) and tokens[0][0] == ANY_MANY
+    ends_with_star = bool(tokens) and tokens[-1][0] == ANY_MANY
+
+    for kind, ch in tokens:
+        if kind == ANY_MANY:
+            if current:
+                chunks.append(current)
+                current = []
+            continue
+        current.append((kind, ch))
+
+    if current:
+        chunks.append(current)
+
+    prefix = bool(chunks) and not starts_with_star
+    suffix = bool(chunks) and not ends_with_star
+    return chunks, prefix, suffix
+
+            
+
+def verify(tokens: list, text: str, pos: int):
+    for j, (kind, ch) in enumerate(tokens):
+        if kind == ANY_ONE:
+            continue
+        if pos + j >= len(text) or text[pos + j] != ch:
+            return False
+    return True
+
+
+def sundayMode(pattern: str, text: str) -> bool:
+    tokens = tokenize(pattern)
+    chunks, pref, suff = split_on_star(tokens)
+    n = len(text)
+    pos = 0
+
+    for k, chunk in enumerate(chunks):
+        m = len(chunk)
+        is_first = (k == 0) and pref
+        is_last = (k == len(chunks)-1)
+
+        if is_first and pref:
+            if not verify(chunk, text, 0):
+                return False
+            pos = m
+            continue
+
+        if is_last and suff:
+            start = n - m
+            if start < pos or not verify(chunk, text, start):
+                return False
+            pos = n
+            continue
+        
+        shift = {}
+        wildcard_shift = m + 1
+        for j, (kind, ch) in enumerate(chunk):
+            if kind == ANY_ONE:
+                wildcard_shift = min(wildcard_shift, m - j)
+            else:
+                shift[ch] = m - j
+        
+        i = pos
+        found  = -1
+        while i + m <= n:
+            if verify(chunk, text, i):
+                found = i
+                break
+            if i + m >= n:
+                break
+            c = text[i + m]
+            i += min(shift.get(c, m + 1), wildcard_shift)
+
+        if found < 0:
+            return False
+        pos = found + m
+    return True
 
 # KMP
 def kmp(pattern: str, text: str):
@@ -384,4 +462,4 @@ if __name__ == "__main__":
     #     "results/wacky_karp.png"
     # )
 
-    print(bruteMode("*ba", "aaabaaaba"))
+    print(bruteMode("b\\\\ a\?*", "aaabaaab\ a?aba"))
