@@ -25,40 +25,40 @@ def tokenize(pattern: str):
     tokens = []
     i = 0
     while i < len(pattern):
-        c = pattern[i]
-        if c == "\\":
+        pat = pattern[i]
+        if pat == "\\":
             if i + 1 >= len(pattern):
                 raise ValueError("pattern ends with a dangling backslash")
             tokens.append((LITERAL, pattern[i+1]))
             i += 2
-        elif c == "?":
+        elif pat == "?":
             tokens.append((ANY_ONE, None))
             i += 1
-        elif c == "*":
+        elif pat == "*":
             if tokens and tokens[-1][0] == ANY_MANY:
                 i += 1
                 continue
             tokens.append((ANY_MANY, None))
             i += 1
         else:
-            tokens.append((LITERAL, c))
+            tokens.append((LITERAL, pat))
             i += 1
     return tokens
 
 def bruteMode(pattern: str, text: str) -> bool:
     tokens = tokenize(pattern)
-    n = len(text)
-    m = len(tokens)
-    dp = [[False] * (m + 1) for _ in range(n + 1)]
+    len_text = len(text)
+    len_toks = len(tokens)
+    dp = [[False] * (len_toks + 1) for _ in range(len_text + 1)]
 
     dp[0][0] = True
-    for j in range(1, m + 1):
+    for j in range(1, len_toks + 1):
         if tokens[j - 1][0] == ANY_MANY:
             dp[0][j] = dp[0][j - 1]
 
-    for i in range(1, n + 1):
+    for i in range(1, len_text + 1):
         dp[i][0] = True
-        for j in range(1, m + 1):
+        for j in range(1, len_toks + 1):
             kind, ch = tokens[j - 1]
             if kind == ANY_MANY:
                 dp[i][j] = dp[i - 1][j] or dp[i][j - 1]
@@ -67,23 +67,23 @@ def bruteMode(pattern: str, text: str) -> bool:
             else:
                 dp[i][j] = dp[i - 1][j - 1] and text[i - 1] == ch
 
-    return any(dp[i][m] for i in range(n + 1))
+    return any(dp[i][len_toks] for i in range(len_text + 1))
 
 # Sunday
 def sunday(pattern: str, text: str):
-    m, n = len(pattern), len(text)
+    len_pat, len_text = len(pattern), len(text)
 
     occ = {}
-    for j in range(m):
+    for j in range(len_pat):
         occ[pattern[j]] = j
 
     matches = []
     i = 0
-    while i <= n - m:
+    while i <= len_text - len_pat:
         if text.startswith(pattern, i):
             matches.append(i)
-        i+=m
-        if i < n:
+        i+=len_pat
+        if i < len_text:
             i -= occ.get(text[i], -1)
 
     return matches
@@ -124,73 +124,73 @@ def verify(tokens: list, text: str, pos: int):
 def sundayMode(pattern: str, text: str) -> bool:
     tokens = tokenize(pattern)
     chunks, pref, suff = split_on_star(tokens)
-    n = len(text)
+    len_text = len(text)
     pos = 0
 
     for k, chunk in enumerate(chunks):
-        m = len(chunk)
+        len_chunk = len(chunk)
         is_first = (k == 0) and pref
         is_last = (k == len(chunks)-1)
 
         if is_first and pref:
             if not verify(chunk, text, 0):
                 return False
-            pos = m
+            pos = len_chunk
             continue
 
         if is_last and suff:
-            start = n - m
+            start = len_text - len_chunk
             if start < pos or not verify(chunk, text, start):
                 return False
-            pos = n
+            pos = len_text
             continue
         
         shift = {}
-        wildcard_shift = m + 1
+        wildcard_shift = len_chunk + 1
         for j, (kind, ch) in enumerate(chunk):
             if kind == ANY_ONE:
-                wildcard_shift = min(wildcard_shift, m - j)
+                wildcard_shift = min(wildcard_shift, len_chunk - j)
             else:
-                shift[ch] = m - j
+                shift[ch] = len_chunk - j
         
         i = pos
         found  = -1
-        while i + m <= n:
+        while i + len_chunk <= len_text:
             if verify(chunk, text, i):
                 found = i
                 break
-            if i + m >= n:
+            if i + len_chunk >= len_text:
                 break
-            c = text[i + m]
-            i += min(shift.get(c, m + 1), wildcard_shift)
+            c = text[i + len_chunk]
+            i += min(shift.get(c, len_chunk + 1), wildcard_shift)
 
         if found < 0:
             return False
-        pos = found + m
+        pos = found + len_chunk
     return True
 
 # KMP
 def kmp(pattern: str, text: str):
-    M = len(pattern)
-    N = len(text)
+    len_pat = len(pattern)
+    len_text = len(text)
 
-    lps = [0] * M
+    lps = [0] * len_pat
     j = 0
 
-    computeLPSArray(pattern, M, lps)
+    computeLPSArray(pattern, len_pat, lps)
 
     i = 0
     results = []
-    while i < N:
+    while i < len_text:
         if pattern[j] == text[i]:
             i += 1
             j += 1
 
-        if j == M:
+        if j == len_pat:
             results.append(i-j)
             j = lps[j-1]
 
-        elif i < N and pattern[j] != text[i]:
+        elif i < len_text and pattern[j] != text[i]:
             if j != 0:
                 j = lps[j-1]
             else:
@@ -198,13 +198,13 @@ def kmp(pattern: str, text: str):
 
     return results
 
-def computeLPSArray(pattern: str, M: int, lps: list):
+def computeLPSArray(pattern: str, len_pat: int, lps: list):
     len = 0
 
     lps[0] = 0
     i = 1
 
-    while i < M:
+    while i < len_pat:
         if pattern[i] == pattern[len]:
             len += 1
             lps[i] = len
@@ -219,13 +219,13 @@ def computeLPSArray(pattern: str, M: int, lps: list):
 # fsm
 def fsm(pattern: str, text: str):
     TF = build_transition_table(pattern)
-    m, n = len(pattern), len(text)
+    len_pat, len_text = len(pattern), len(text)
     state = 0
     results = []
-    for i in range(n):
+    for i in range(len_text):
         state = TF[state].get(text[i], 0)
-        if state == m:
-            results.append(i - m + 1)
+        if state == len_pat:
+            results.append(i - len_pat + 1)
     return results
 
 def build_transition_table(pattern: str):
