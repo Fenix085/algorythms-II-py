@@ -56,12 +56,12 @@ def test_bruteMode():
     assert bruteMode("a?*c", "aaabaaaba") == False
 
 def test_sundayMode():
-    assert bruteMode("aba", "aaabaaaba") == True
-    assert bruteMode("*ba", "aaabaaaba") == True
-    assert bruteMode("a?a", "aaabaaaba") == True
-    assert bruteMode("a?b", "aaabaaaba") == True
-    assert bruteMode("a?*", "aaabaaaba") == True
-    assert bruteMode("b*b", "aaabaaaba") == True
-    assert bruteMode("ac", "aaabaaaba") == False
-    assert bruteMode("a?c", "aaabaaaba") == False
-    assert bruteMode("a?*c", "aaabaaaba") == False
+    assert sundayMode("aba", "aaabaaaba") == True
+    assert sundayMode("*ba", "aaabaaaba") == True
+    assert sundayMode("a?a", "aaabaaaba") == True
+    assert sundayMode("a?b", "aaabaaaba") == True
+    assert sundayMode("a?*", "aaabaaaba") == True
+    assert sundayMode("b*b", "aaabaaaba") == True
+    assert sundayMode("ac", "aaabaaaba") == False
+    assert sundayMode("a?c", "aaabaaaba") == False
+    assert sundayMode("a?*c", "aaabaaaba") == False

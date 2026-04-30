@@ -46,28 +46,28 @@ def tokenize(pattern: str):
     return tokens
 
 def bruteMode(pattern: str, text: str) -> bool:
-    tokens = tokenize(pattern)
-    len_text = len(text)
-    len_toks = len(tokens)
-    dp = [[False] * (len_toks + 1) for _ in range(len_text + 1)]
+    pattern_tokens = tokenize(pattern)
+    text_length = len(text)
+    token_count = len(pattern_tokens)
+    match_table = [[False] * (token_count + 1) for _ in range(text_length + 1)]
 
-    dp[0][0] = True
-    for j in range(1, len_toks + 1):
-        if tokens[j - 1][0] == ANY_MANY:
-            dp[0][j] = dp[0][j - 1]
+    match_table[0][0] = True
+    for token_index in range(1, token_count + 1):
+        if pattern_tokens[token_index - 1][0] == ANY_MANY:
+            match_table[0][token_index] = match_table[0][token_index - 1]
 
-    for i in range(1, len_text + 1):
-        dp[i][0] = True
-        for j in range(1, len_toks + 1):
-            kind, ch = tokens[j - 1]
+    for text_index in range(1, text_length + 1):
+        match_table[text_index][0] = True
+        for token_index in range(1, token_count + 1):
+            kind, ch = pattern_tokens[token_index - 1]
             if kind == ANY_MANY:
-                dp[i][j] = dp[i - 1][j] or dp[i][j - 1]
+                match_table[text_index][token_index] = match_table[text_index - 1][token_index] or match_table[text_index][token_index - 1]
             elif kind == ANY_ONE:
-                dp[i][j] = dp[i - 1][j - 1]
+                match_table[text_index][token_index] = match_table[text_index - 1][token_index - 1]
             else:
-                dp[i][j] = dp[i - 1][j - 1] and text[i - 1] == ch
+                match_table[text_index][token_index] = match_table[text_index - 1][token_index - 1] and text[text_index - 1] == ch
 
-    return any(dp[i][len_toks] for i in range(len_text + 1))
+    return any(match_table[text_index][token_count] for text_index in range(text_length + 1))
 
 # Sunday
 def sunday(pattern: str, text: str):
@@ -122,51 +122,43 @@ def verify(tokens: list, text: str, pos: int):
 
 
 def sundayMode(pattern: str, text: str) -> bool:
-    tokens = tokenize(pattern)
-    chunks, pref, suff = split_on_star(tokens)
-    len_text = len(text)
-    pos = 0
+    pattern_tokens = tokenize(pattern)
+    if not pattern_tokens:
+        return len(text) == 0
 
-    for k, chunk in enumerate(chunks):
-        len_chunk = len(chunk)
-        is_first = (k == 0) and pref
-        is_last = (k == len(chunks)-1)
+    chunks, _, _ = split_on_star(pattern_tokens)
+    if not chunks:
+        return True
 
-        if is_first and pref:
-            if not verify(chunk, text, 0):
-                return False
-            pos = len_chunk
-            continue
+    text_length = len(text)
+    search_start = 0
 
-        if is_last and suff:
-            start = len_text - len_chunk
-            if start < pos or not verify(chunk, text, start):
-                return False
-            pos = len_text
-            continue
-        
-        shift = {}
-        wildcard_shift = len_chunk + 1
-        for j, (kind, ch) in enumerate(chunk):
+    for chunk in chunks:
+        chunk_length = len(chunk)
+
+        shift_table = {}
+        wildcard_shift = chunk_length + 1
+        for token_index, (kind, ch) in enumerate(chunk):
             if kind == ANY_ONE:
-                wildcard_shift = min(wildcard_shift, len_chunk - j)
+                wildcard_shift = min(wildcard_shift, chunk_length - token_index)
             else:
-                shift[ch] = len_chunk - j
-        
-        i = pos
-        found  = -1
-        while i + len_chunk <= len_text:
-            if verify(chunk, text, i):
-                found = i
-                break
-            if i + len_chunk >= len_text:
-                break
-            c = text[i + len_chunk]
-            i += min(shift.get(c, len_chunk + 1), wildcard_shift)
+                shift_table[ch] = chunk_length - token_index
 
-        if found < 0:
+        candidate_start = search_start
+        match_start = -1
+        while candidate_start + chunk_length <= text_length:
+            if verify(chunk, text, candidate_start):
+                match_start = candidate_start
+                break
+            if candidate_start + chunk_length >= text_length:
+                break
+            next_char = text[candidate_start + chunk_length]
+            candidate_start += min(shift_table.get(next_char, chunk_length + 1), wildcard_shift)
+
+        if match_start < 0:
             return False
-        pos = found + len_chunk
+        search_start = match_start + chunk_length
+
     return True
 
 # KMP
@@ -429,14 +421,14 @@ ALGOS = {
 }
 
 if __name__ == "__main__":
-    # f = open("stuff/Lord of The Rings (JRR Tolkien).txt")
-    # text = f.read()
-    # f.close()
+    f = open("stuff/Lord of The Rings (JRR Tolkien).txt")
+    text = f.read()
+    f.close()
 
     pattern_short = "Frodo"
     pattern_long = """Sam looked at his master with approval, but also with surprise: there was a look in his face and a tone in his voice that he had not known before. It had always been a notion of his that the kindness of dear Mr. Frodo was of such a high degree that it must imply a fair measure of blindness. Of course, he also firmly held the incompatible belief that Mr. Frodo was the wisest person in the world (with the possible exception of Old Mr. Bilbo and of Gandalf). Gollum in his own way, and with much more excuse as his acquaintance was much briefer, may have _made a similar mistake, confusing kindness and blindness. At any rate this speech abashed and terrified him. He grovelled on the ground and could speak no clear words but nice master.
-	# Frodo waited patiently for a while, then he spoke again less sternly. `Come now, Gollum or Sm�agol if you wish, tell me of this other way, and show me, if you can, what hope there is in it, enough to justify me in turning aside from my plain path. I am in haste.'
-	# But Gollum was in a pitiable state, and Frodo's threat had quite unnerved him. It was not easy to get any clear account out of him, amid his mumblings and squeakings, and the frequent interruptions in which he crawled on the floor and begged them both to be kind to `poor little Sm�agol'. After a while he grew a little calmer, and Frodo gathered bit by bit that, if a traveller followed the road that turned west of Ephel D�ath, he would come in time to a crossing in a circle of dark trees. On the right a road went down to Osgiliath and the bridges of the Anduin; in the middle the road went on southwards."""
+	Frodo waited patiently for a while, then he spoke again less sternly. `Come now, Gollum or Sm�agol if you wish, tell me of this other way, and show me, if you can, what hope there is in it, enough to justify me in turning aside from my plain path. I am in haste.'
+	But Gollum was in a pitiable state, and Frodo's threat had quite unnerved him. It was not easy to get any clear account out of him, amid his mumblings and squeakings, and the frequent interruptions in which he crawled on the floor and begged them both to be kind to `poor little Sm�agol'. After a while he grew a little calmer, and Frodo gathered bit by bit that, if a traveller followed the road that turned west of Ephel D�ath, he would come in time to a crossing in a circle of dark trees. On the right a road went down to Osgiliath and the bridges of the Anduin; in the middle the road went on southwards."""
 
     # short_results = {name: measure_samples(algo, pattern_short, text) for name, algo in ALGOS.items()}
     # long_results  = {name: measure_samples(algo, pattern_long,  text) for name, algo in ALGOS.items()}
@@ -447,19 +439,24 @@ if __name__ == "__main__":
     # compare(pattern_long, text, isLong=True)
 
     # s = "a"*100000
-    # p = "a"*9998 + "b" + "a"
+    # p = "c"*50
     # l = list(s)
     # shuffle(l)
     # wacky_karp = ''.join(l)
 
-    # short_results = {name: measure_samples(algo, p, s) for name, algo in ALGOS.items()}
-    # long_results  = {name: measure_samples(algo, p, s) for name, algo in ALGOS.items()}
+    short_results = {name: measure_samples(algo, pattern_short, text) for name, algo in ALGOS.items()}
+    long_results  = {name: measure_samples(algo, pattern_long, text) for name, algo in ALGOS.items()}
 
-    # grouped_boxplot(
-    #     short_results, long_results,
-    #     "running such a pattern so that Rabin-Karp has to be faster than Sunday",
-    #     "Runtime (seconds)",
-    #     "results/wacky_karp.png"
-    # )
+    grouped_boxplot(
+        short_results, long_results,
+        "running such a pattern so that Sunday has to be faster than Gusfield Z",
+        "Runtime (seconds)",
+        "results/wacky_sund.png"
+    )
 
-    print(bruteMode("b\\\\ a\?*", "aaabaaab\ a?aba"))
+    # print(bruteMode("b\\\\ a\?*", "aaabaaab\ a?aba"))
+
+    text_rk = ''.join("a"*100000)
+
+    # pattern that won't appear — random 30-char string + a rare suffix
+    pattern_rk = ''.join("c"*28) + "##"
